@@ -42,3 +42,11 @@
 (setf x (* 3 2))
 (setf y (+ x 3))
 
+
+;; do/while loop
+(do ((i 1 (+ i 1)))
+    ((> i 10) 'done)
+    (format t "~A~%" i)
+  )
+
+
