@@ -10,10 +10,9 @@
           (has-list-p (cdr lst)))))
 
 (defun print-dots (x)
-  (do ((i 1 (+ i 1)))
-      ((> i x) T)
-    (format t ".")
-      ))
+  (do ((i 1 (1+ i)))
+      ((> i x) t)
+    (format t ".")))
 
 (defun print-dots (x)
   (or (<= x 0)
