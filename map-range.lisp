@@ -1,0 +1,36 @@
+(defun map-range (f x y)
+   (cond ((> x y) (cons (funcall f x) (map-range f (1- x) y)))
+       ((< x y) (cons (funcall f x) (map-range f (1+ x) y)))
+       (t nil)))
+
+(defun find-range (f x y)
+   (cond ((> x y) 
+          (if (funcall f x) 
+              x
+              (find-range f (1- x) y)))
+       ((< x y) 
+          (if (funcall f x) 
+              x
+              (find-range f (1+ x) y)))
+       (t nil)))
+
+(defun every-range (f x y)
+  (cond ((> x y)
+         (and (funcall f x)
+              (every-range f (1- x) y)))
+        ((< x y)
+         (and (funcall f x)
+              (every-range f (1+ x) y)))
+        (t t)))
+
+(defun reduce-range (f x y &optional init)
+  (cond ((> x y)
+         (reduce-range f (1- x) y (funcall f init x)))
+        ((< x y)
+         (reduce-range f (1+ x) y (funcall f init x)))
+        (t init)))
+
+(map-range 'identity 10 1)
+(find-range (lambda (n) (= (mod 35 n) 0)) 2 10)
+(every-range (lambda (n) (> (mod 37 n) 0)) 2 36)
+(reduce-range (lambda (v x) (cons x v)) 1 5)
