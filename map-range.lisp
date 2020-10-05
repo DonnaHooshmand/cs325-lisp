@@ -1,18 +1,25 @@
 (defun map-range (f x y)
-   (cond ((> x y) (cons (funcall f x) (map-range f (1- x) y)))
-       ((< x y) (cons (funcall f x) (map-range f (1+ x) y)))
-       (t nil)))
+  (if (> x y)
+      (loop for i from x downto (1+ y)
+            collect (funcall f i))
+      (loop for i from x upto (1- y)
+            collect (funcall f i))))
+
+(map-range #'identity 1 10)
+(map-range #'identity 10 1)
 
 (defun find-range (f x y)
-   (cond ((> x y) 
-          (if (funcall f x) 
-              x
-              (find-range f (1- x) y)))
-       ((< x y) 
-          (if (funcall f x) 
-              x
-              (find-range f (1+ x) y)))
-       (t nil)))
+  (if (> x y)
+      (loop for i from x downto (1+ y)
+            when (funcall f i)
+            do (return i)
+            finally (return nil))
+      (loop for i from x upto (1- y)
+            when (funcall f i) 
+            do (return i)
+            finally (return nil))))
+
+(find-range #'evenp 1 2)
 
 (defun every-range (f x y)
   (cond ((> x y)
