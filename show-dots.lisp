@@ -9,20 +9,17 @@
            (format t ")"))))
 
 (defun show-list (lst)
-  (when (atom lst) (format t "~a" lst))
-  (when (consp lst)
-    (format t "[")
-    (do ((ll lst 
-             (cond ((listp (cdr ll)) (cdr ll))
-                   (t
-                    (format t ". ")
-                    (list (cdr ll))))))
-        ((null ll) nil)
-      (show-list (car ll))
-      (unless (null (cdr ll))
-        (format t " ")))
-    (format t "]")))
-
+  (cond ((atom lst) (format t "~a" lst))
+        (t (format t "[")
+           (do ((ll lst (cdr ll)))
+               ((atom (cdr ll))
+                (show-list (car ll))
+                (unless (null (cdr ll))
+                        (format t " . ")
+                        (show-list (cdr ll))))
+             (show-list (car ll))
+             (unless (null (cdr ll)) (format t " ")))
+           (format t "]"))))
 
 (show-list '(a b c . d))
 (show-list '(a b c))
