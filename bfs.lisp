@@ -1,15 +1,5 @@
 (in-package :cs325-user)
 
-
-(defun super ()
-  (catch 'abort
-         (sub)
-         (format t "We'll never see this.")))
-(defun sub ()
-  (throw 'abort 99))
-
-(sub)
-
 (defun shortest-path (start end net)
   (catch 'abort
          (bfs end (list (list start)) net)))

@@ -1,21 +1,17 @@
 (in-package :cs325-user)
 
-(defun max-min (vec &key (start 0) (end 1 endp))
-  (cond ((or (= 0 (length vec)) (>= start end)) (values nil nil))
-        (endp (max-min-rec vec :start start :end end
-                           :min (aref vec start) :max (aref vec start)))
-        (t (max-min-rec vec :start start :end (length vec)
-                        :min (aref vec start) :max (aref vec start)))))
+(defun max-min (vec &key (start 0) (end (length vec)))
+  (if (>= start end)
+      (values nil nil)
+      (max-min-rec vec :start start :end end
+                   :cmin (aref vec start) :cmax (aref vec start))))
 
-(defun max-min-rec (vec &key start end min max)
-  (cond ((>= start end) (values max min))
-        (t (max-min-rec vec :start (1+ start) :end end
-                        :min (if (< (aref vec start) min)
-                                 (aref vec start)
-                                 min)
-                        :max (if (> (aref vec start) max)
-                                 (aref vec start)
-                                 max)))))
+(defun max-min-rec (vec &key start end cmin cmax)
+  (if (>= start end)
+      (values cmax cmin)
+      (max-min-rec vec :start (1+ start) :end end
+                   :cmin (min (aref vec start) cmin)
+                   :cmax (max (aref vec start) cmax))))
 
 (trace max-min)
 (untrace)
