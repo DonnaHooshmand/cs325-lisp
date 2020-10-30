@@ -1,0 +1,63 @@
+(ql:quickload "cs325")
+(ql:quickload "microdata-tests")
+
+(defun camelize (str &optional capitalize)
+  (do ((i 0 (1+ i))
+       (hyphenp nil (eql #\- (aref str i)))
+       (res "" (cond (hyphenp
+                      (format nil "~a~a" 
+                              (subseq res 0 (1- (length res)))
+                              (char-upcase (aref str i))))
+                     (t (format nil "~a~a" res (aref str i))))))
+      ((>= i (length str))
+       (if capitalize
+           (format nil "~a~a" (char-upcase (aref res 0)) (subseq res 1))
+           res))))
+
+(camelize "hello-world")
+(do while)
+
+(defun n-starting-cap (str)
+  (do ((i 0 (1+ i))
+       (l (length str)))
+      ((or (>= i l) (lower-case-p (aref str i)))
+       i)))
+
+(defun hyphenate (str &optional case)
+  (do ((i (n-starting-cap str) (1+ i))
+       (res (subseq str 0 (n-starting-cap str))
+            (cond ((upper-case-p (aref str i))
+                   (format nil "~a-~a" res (aref str i)))
+                  (t (format nil "~a~a" res (aref str i))))))
+      ((>= i (length str))
+       (if (string-equal case "lower")
+           (string-downcase res)
+           (string-upcase res)))))
+
+(defun hyphenate (str &optional case)
+  (do ((i 0 (1+ i))
+       (l (length str))
+       (prevLower nil)
+       (start 0)
+       (res ""))
+      ((>= i l) 
+       (setf res (if (= 0 (length res))
+                     (subseq str start i)
+                     (format nil "~a-~a"
+                             (subseq res 1)
+                             (subseq str start i))))
+       (if (string-equal case "lower")
+                    (string-downcase res)
+                    (string-upcase res)))
+    (cond ((and prevLower (upper-case-p (aref str i)))
+           (setf prevLower nil)
+           (setf res (format nil "~a-~a" res (subseq str start i)))
+           (setf start i))
+          ((lower-case-p (aref str i))
+           (setf prevLower t))
+          (t nil))))
+
+(hyphenate "URL" )
+
+(hyphenate "HelloWorld" :upper)
+(hyphenate "urlID" :upper)
