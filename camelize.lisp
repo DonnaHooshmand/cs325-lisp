@@ -1,61 +1,30 @@
-(ql:quickload "cs325")
-(ql:quickload "microdata-tests")
+(in-package :cs325-user)
 
 (defun camelize (str &optional capitalize)
-  (do ((i 0 (1+ i))
-       (hyphenp nil (eql #\- (aref str i)))
-       (res "" (cond (hyphenp
-                      (format nil "~a~a" 
-                              (subseq res 0 (1- (length res)))
-                              (char-upcase (aref str i))))
-                     (t (format nil "~a~a" res (aref str i))))))
-      ((>= i (length str))
-       (if capitalize
-           (format nil "~a~a" (char-upcase (aref res 0)) (subseq res 1))
-           res))))
+  (let  ((res (remove #\- (string-capitalize str))))
+    (if capitalize
+        res
+        (format nil "~a~a" (char-downcase (char res 0)) (subseq res 1)))))
 
-(camelize "hello-world")
-(do while)
+(camelize "hello-world" :capitalize)
 
-(defun n-starting-cap (str)
-  (do ((i 0 (1+ i))
-       (l (length str)))
-      ((or (>= i l) (lower-case-p (aref str i)))
-       i)))
-
-(defun hyphenate (str &optional case)
-  (do ((i (n-starting-cap str) (1+ i))
-       (res (subseq str 0 (n-starting-cap str))
-            (cond ((upper-case-p (aref str i))
-                   (format nil "~a-~a" res (aref str i)))
-                  (t (format nil "~a~a" res (aref str i))))))
-      ((>= i (length str))
-       (if (string-equal case "lower")
-           (string-downcase res)
-           (string-upcase res)))))
+(defun hyphenate-next-char (s prev curr)
+  (cond ((and (lower-case-p prev) (upper-case-p curr))
+         (format s "-~a" curr))
+        (t
+         (format s "~a" curr))))
 
 (defun hyphenate (str &optional case)
   (do ((i 0 (1+ i))
+       (prev-char '#\A (char str i))
        (l (length str))
-       (prevLower nil)
-       (start 0)
-       (res ""))
-      ((>= i l) 
-       (setf res (if (= 0 (length res))
-                     (subseq str start i)
-                     (format nil "~a-~a"
-                             (subseq res 1)
-                             (subseq str start i))))
-       (if (string-equal case "lower")
+       (res (make-array '(0) :element-type 'base-char
+                             :fill-pointer 0 :adjustable t)))
+      ((>= i l) (if (string-equal case "lower")
                     (string-downcase res)
                     (string-upcase res)))
-    (cond ((and prevLower (upper-case-p (aref str i)))
-           (setf prevLower nil)
-           (setf res (format nil "~a-~a" res (subseq str start i)))
-           (setf start i))
-          ((lower-case-p (aref str i))
-           (setf prevLower t))
-          (t nil))))
+    (with-output-to-string (s res)
+      (hyphenate-next-char s prev-char (char str i)))))
 
 (hyphenate "URL" )
 
