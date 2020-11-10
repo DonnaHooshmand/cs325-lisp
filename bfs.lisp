@@ -1,13 +1,38 @@
 (in-package :cs325-user)
 
+; Original BFS
+(defun bfs (end queue net) 
+  (if (null queue) 
+      nil
+      (let ((path (car queue)))
+        (let ((node (car path))) 
+          (if (eql node end) 
+              (reverse path)
+              (bfs end
+                   (append (cdr queue)
+                           (new-paths path node net))
+                   net))))))
+
 (defun new-paths (path node net)
   (mapcar #'(lambda (n)
               (cons n path))
           (cdr (assoc node net))))
 
 ;; No catch throw
+(defun new-paths (path node net)
+  (mapcar #'(lambda (n)
+              (cons n path))
+          (cdr (assoc node net))))
+
+(defun new-path (path node net)
+  (mapcan (lambda (x)
+            (if (consp x)
+                (list x path)
+                nil))
+          (cdr (assoc node net))))
+
 (defun shortest-path (start end net)
-  (if (some (lambda (node) (eql node end)) (car net))
+  (if (member end net)
       (list start end)
       (bfs end (list (list start)) net)))
 
@@ -20,10 +45,11 @@
             (bfs end (cdr queue) net seen)
             (let* ((news (new-paths path node net))
                    (found (find-if (lambda (p) (eql (car p) end)) news)))
-              (if found (reverse found) (bfs end
-                                             (append (cdr queue) news)
-                                             net
-                                             (cons node seen))))))))
+              (or (reverse found) 
+                  (bfs end
+                       (append (cdr queue) news)
+                       net
+                       (cons node seen))))))))
 
 ;; Catch and throw
 (defun shortest-path (start end net)
@@ -32,20 +58,21 @@
       (catch 'abort
              (bfs end (list (list start)) net))))
 
-(defun bfs (end queue net &optional (seen nil))
-  (if (empty-queue-p queue)
-      nil
-      (let* ((path (car queue))
-             (node (car path)))
-        (if (member node seen)
-            (bfs end (cdr queue) net seen)
-            (let ((news (new-paths path node net)))
-              (mapcan (lambda (p) (when (eql (car p) end)
-                                    (throw 'abort (reverse p)))) news)
-              (bfs end
-                   (append (cdr queue) news)
-                   net
-                   (cons node seen)))))))
+;(defun bfs (end queue net &optional (seen nil))
+  ;(if (empty-queue-p queue)
+      ;nil
+      ;(let* ((path (car queue))
+             ;(node (car path)))
+        ;(if (member node seen)
+            ;(bfs end (cdr queue) net seen)
+            ;(let ((news (new-paths path node net)))
+              ;(mapcan (lambda (p) (when (eql (car p) end)
+                                    ;(throw 'abort (reverse p)))) news)
+              ;(bfs end
+                   ;(append (cdr queue) news)
+                   ;net
+                   ;(cons node seen)))))))
+
 
 (shortest-path 'a 'f '((a b c) (b a c) (c d) (e f)))
 (shortest-path 'a 'f '((a b c) (b c f) (c e) (e f)))
