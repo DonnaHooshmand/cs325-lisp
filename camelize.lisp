@@ -14,17 +14,18 @@
         (t
          (format s "~a" curr))))
 
-(defun hyphenate (str &optional case)
-  (do ((i 0 (1+ i))
-       (prev-char '#\A (char str i))
-       (l (length str))
-       (res (make-array '(0) :element-type 'base-char
-                             :fill-pointer 0 :adjustable t)))
-      ((>= i l) (if (string-equal case "lower")
-                    (string-downcase res)
-                    (string-upcase res)))
-    (with-output-to-string (s res)
+(defun hyphenate-stream (str)
+  (with-output-to-string (s)
+    (do ((i 0 (1+ i))
+         (prev-char '#\A (char str i))
+         (l (length str)))
+        ((>= i l) nil)
       (hyphenate-next-char s prev-char (char str i)))))
+
+(defun hyphenate (str &optional case)
+  (if (eql case "lower")
+      (string-downcase (hyphenate-stream str))
+      (string-upcase (hyphenate-stream str))))
 
 (hyphenate "URL" )
 
