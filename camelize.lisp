@@ -10,17 +10,19 @@
 
 (defun hyphenate-next-char (s prev curr)
   (cond ((and (lower-case-p prev) (upper-case-p curr))
-         (format s "-~a" curr))
+         (format s "-~a" curr)
+         curr)
         (t
-         (format s "~a" curr))))
+         (format s "~a" curr)
+         curr)))
 
 (defun hyphenate-stream (str)
   (with-output-to-string (s)
     (do ((i 0 (1+ i))
-         (prev-char '#\A (char str i))
+         (prev-char '#\A (hyphenate-next-char s prev-char (char str i)))
          (l (length str)))
         ((>= i l) nil)
-      (hyphenate-next-char s prev-char (char str i)))))
+      )))
 
 (defun hyphenate (str &optional case)
   (if (eql case "lower")

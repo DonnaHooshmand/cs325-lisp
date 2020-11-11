@@ -13,12 +13,31 @@
 ; takes a string with JSON (or JSON-LD) and returns a nested Lisp syntax that's easy to process with normal Lisp functions.
 (json:decode-json-from-string string with JSON) 
 
+
 (defun fetch (url)
   (net.html.parser:parse-html
     (flexi-streams:octets-to-string
       (drakma:http-request url :force-binary t))))
 
-(defparameter *data* (fetch "https://www.foodnetwork.com/recipes/food-network-kitchen/honey-mustard-dressing-recipe-2011614"))
+(defun is-ld (lst)
+  (and (consp lst) 
+       (string-equal "application/ld+json" (caddr lst))))
 
-*data*
+(defun find-json-ld-str (page)
+  (cond ((and (consp page) (is-ld (car page)))
+         (throw 'found (cadr page)))
+        ((consp page)
+         (dolist (x page)
+           (find-json-ld-str x)))
+        (t nil)))
 
+(defun json-ld (page)
+  (json:decode-json-from-string 
+    (catch 'found
+           (find-json-ld-str page))))
+
+(defun fetch-instance-triples (url)
+  (json-ld (fetch url)))
+
+
+(fetch-instance-triples "https://www.foodnetwork.com/recipes/food-network-kitchen/honey-mustard-dressing-recipe-2011614")
