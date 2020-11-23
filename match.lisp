@@ -2,17 +2,16 @@
 (in-package #:exmatch)
 (in-package #:match-tests)
 
-(run-tests)
-
-
 (defun ?not (pat)
   pat)
 
 (defun ?= (pat)
   pat)
 
-(defun ?or (path)
-  pat)
+(defun ?or (pats y lsts)
+  (any (lambda (x) (print x)) pats))
+
+(?or '(x y z) 'x '(nil))
 
 
 (var-p '?not)
