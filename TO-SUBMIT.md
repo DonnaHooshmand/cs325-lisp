@@ -1,2 +1,2 @@
 - has-slots-p
--
+- linearize
