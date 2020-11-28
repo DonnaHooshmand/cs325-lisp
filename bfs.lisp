@@ -18,80 +18,90 @@
               (cons n path))
           (cdr (assoc node net))))
 
+
 ;; No catch throw
 (defun new-paths (path node net)
-  (mapcar #'(lambda (n)
-              (cons n path))
-          (cdr (assoc node net))))
-
-(defun new-path (path node net)
-  (mapcan (lambda (x)
-            (if (consp x)
-                (list x path)
-                nil))
+  (mapcan (lambda (n)
+            (unless (member n path) (list (cons n path))))
           (cdr (assoc node net))))
 
 (defun shortest-path (start end net)
-  (if (member end net)
-      (list start end)
-      (bfs end (list (list start)) net)))
+  (bfs end (list (list start)) net))
 
 (defun bfs (end queue net &optional (seen nil))
   (if (empty-queue-p queue)
       nil
       (let* ((path (car queue))
              (node (car path)))
-        (if (member node seen)
-            (bfs end (cdr queue) net seen)
-            (let* ((news (new-paths path node net))
-                   (found (find-if (lambda (p) (eql (car p) end)) news)))
-              (or (reverse found) 
-                  (bfs end
-                       (append (cdr queue) news)
-                       net
-                       (cons node seen))))))))
+        (cond ((member node seen)
+               (bfs end (cdr queue) net seen))
+              ((member end (assoc node net))
+               (nreverse (cons end path)))
+              (t
+               (let* ((news (new-paths path node net))
+                      (found (find-if (lambda (p) (eql (car p) end)) news)))
+                 (or (nreverse found) 
+                     (bfs end
+                          (append (cdr queue) news)
+                          net
+                          (cons node seen)))))))))
+
+(run-tests shortest-path)
 
 ;; Catch and throw
 (defun shortest-path (start end net)
-  (if (some (lambda (node) (eql node end)) (car net))
-      (list start end)
-      (catch 'abort
-             (bfs end (list (list start)) net))))
+  (catch 'abort 
+         (bfs end (list (list start)) net)))
 
-;(defun bfs (end queue net &optional (seen nil))
-  ;(if (empty-queue-p queue)
-      ;nil
-      ;(let* ((path (car queue))
-             ;(node (car path)))
-        ;(if (member node seen)
-            ;(bfs end (cdr queue) net seen)
-            ;(let ((news (new-paths path node net)))
-              ;(mapcan (lambda (p) (when (eql (car p) end)
-                                    ;(throw 'abort (reverse p)))) news)
-              ;(bfs end
-                   ;(append (cdr queue) news)
-                   ;net
-                   ;(cons node seen)))))))
+(defun new-paths (path node net)
+  (mapcan (lambda (x)
+            (if (consp x) (list x path) (throw 'abort path)))
+          (cdr (assoc node net))))
 
-
-(shortest-path 'a 'f '((a b c) (b a c) (c d) (e f)))
-(shortest-path 'a 'f '((a b c) (b c f) (c e) (e f)))
-(shortest-path 'a 'c '((a b c) (b c) (c d)))
-(shortest-path 'a 'd '((a b c) (b c) (c d)))
+(defun new-paths (path node net)
+  (mapcan (lambda (n)
+            (unless (member n path) (list (cons n path))))
+          (cdr (assoc node net))))
 
 (defun shortest-path (start end net)
-  (if (some (lambda (node) (eql node end)) (car net))
-      (list start end)
-      (bfs end (list (list start)) net)))
+  (bfs end (list (list start)) net))
+
+(run-tests shortest-path)
+
+; Original BFS
+(defun bfs (end queue net) 
+  (if (null queue) 
+      nil
+      (let ((path (car queue)))
+        (let ((node (car path))) 
+          (if (eql node end) 
+              (reverse path)
+              (bfs end
+                   (append (cdr queue)
+                           (new-paths path node net))
+                   net))))))
+
+(shortest-path 'a 'd '((a b c) (b c) (c d))) ; '(a c d) 
+(shortest-path 'a 'c '((a b c) (b c) (c d))) ; '(a c) 
+(shortest-path 'a 'd '((a b c) (b e) (e c) (c d))) ; '(a c d) 
+(shortest-path 'a 'f '((a b c) (b c) (c e) (e f))) ; '(a c e f) 
+(shortest-path 'a 'f '((a b c) (b c f) (c e) (e f))) ; '(a b f) 
+(shortest-path 'a 'f '((a b c) (b c) (c d) (e f))) ; '()  
+(shortest-path 'a 'f '((a b c d) (b e f))) ; '(a b f) 
+
+;; With cycles
+(shortest-path 'a 'd '((a b c) (b a c) (c d))) ; '(a c d) 
+(test-path '(a c) 'a 'c '((a b c) (b c) (c a d)))
+(test-path '() 'a 'c '((a b) (b a) (c)))
+(test-path '() 'a 'f '((a b c) (b a c) (c d) (e f)))
+(test-path '() 'a 'f '((a b c) (b c) (c b) (e f)))
+(test-path '(a b c e f) 'a 'f '((a b) (b c d) (c e) (d a) (e f)))
 
 (trace bfs)
 (untrace)
 (trace new-paths)
 
-(format t "~a ~a ~a ~a" queue path node end)
-
 (test-path '(a c d) 'a 'd '((a b c) (b c) (c d)))
-
 (test-path '(a c) 'a 'c '((a b c) (b c) (c d)))
 (test-path '(a c d) 'a 'd '((a b c) (b e) (e c) (c d)))
 (test-path '(a c e f) 'a 'f '((a b c) (b c) (c e) (e f)))
@@ -107,3 +117,4 @@
 (test-path '() 'a 'f '((a b c) (b c) (c b) (e f)))
 (test-path '(a b c e f) 'a 'f '((a b) (b c d) (c e) (d a) (e f)))
 
+(run-tests shortest-path)

@@ -1,79 +1,54 @@
-;;;;;;; defined in mops package
-(defvar *mop-map* nil)
-
-; exported
-(defun kb-map () *mop-map*)
-
-; exported
-(defun build-mop-map ()
-  (setf *mop-map* (make-hash-table))
-  (dolist (mop (kb-mops))
-    (dolist (parent (cadr mop))
-      (let ((lst (gethash parent (kb-map))))
-        (setf (gethash parent (kb-map))
-              (remove-duplicates (cons (car mop) lst)))))))
-
-
-;;;;;; mop-search
 (ql:quickload "mops")
 (in-package :mop-tests)
 (load-kb *mop-file*)
-(build-mop-map)
 
-(defun has-slots-flat (mop slots)
-  (every #'(lambda (slot)
-             (multiple-value-bind (filler success) (get-filler mop (car slot))
-               (and success (eql filler (cadr slot)))
-               )) slots))
+;;;;;;; defined in mops package
+(defvar *mop-map* nil)
 
-(defun is-duplicate (mop mops)
-  (some #'(lambda (x) (and (isa-p mop x) (not (eql x mop)))) mops))
+(defun kb-map () *mop-map*)
 
-(defun deduplicate-mops (mops)
-  (remove nil (mapcar #'(lambda (x) 
-                          (unless (is-duplicate x mops) x)) mops)))
+(defun load-kb (pathname)
+  (load-data pathname 'set-kb)
+  (build-mop-map))
 
-(defun mop-search-worker (mop slots)
-  (if (has-slots-flat mop slots)
-      (list mop)
-      (do ((child (gethash mop (kb-map)) (cdr child))
-           (res nil (remove-duplicates (append res (mop-search (car child) slots)))))
-          ((null child) res))))
+(defun build-mop-map ()
+  (setf *mop-map* (make-hash-table))
+  (dolist (mop (kb-mops))
+    (dolist (slot (cddr mop))
+      (setf (gethash (cadr slot) (kb-map))
+            (adjoin (car mop) (gethash (cadr slot) (kb-map)))))))
 
-(defun mop-search (mop slots)
-  (deduplicate-mops (mop-search-worker mop slots)))
-
-(defun has-slots-flat (mop slots)
-  (every #'(lambda (slot)
-             (multiple-value-bind (filler success) (get-filler mop (car slot))
-               (and success (eql filler (cadr slot)))
-               )) slots))
-
-(defun is-duplicate (mop mops)
-  (some #'(lambda (x) (and (isa-p mop x) (not (eql x mop)))) mops))
-
-(defun deduplicate-mops (mops)
-  (remove nil (mapcar #'(lambda (x) 
-                          (unless (is-duplicate x mops) x)) mops)))
-
-(defun mop-search-worker (mop slots)
-  (if (has-slots-flat mop slots)
-      (list mop)
-      (do ((child (gethash mop (kb-map)) (cdr child))
-           (res nil (remove-duplicates (append res (mop-search (car child) slots)))))
-          ((null child) res))))
+(defun valid-mop-p (mop mop-abst slots)
+  (and (isa-p mop mop-abst)
+       (has-slots-p mop slots)))
 
 (defun mop-search (mop slots)
-  (deduplicate-mops (mop-search-worker mop slots)))
+  (when (null (kb-map))
+    (build-mop-map))
+  (let ((candidates (mapcan #'(lambda (slot)
+                                (gethash (cadr slot) (kb-map)))
+                            slots)))
+    (mapcan #'(lambda (candidate)
+                (when (valid-mop-p candidate mop slots)
+                  (list candidate)))
+            candidates)))
 
+;;;;;; mop-search
+(MOP-SEARCH 'ANIMAL '((BRAIN NIL))) ; (CHIHUAHUA)
 
 ;;;;;; Self testing
-(MOP-SEARCH 'EVENT '((ACTOR ELEPHANT)))
+(MOP-SEARCH 'EVENT '((ACTOR ELEPHANT))) ; NIL
 (MOP-SEARCH 'BIRD '((COLOR YELLOW))) ; (canary)
+(MOP-SEARCH 'BIRD '((COLOR YELLOW) (OWNER GRANNY))) ; (TWEETY)
 (MOP-SEARCH 'ANIMAL '((AGE 7))) ; (buddy)
 (MOP-SEARCH 'ANIMAL '((BRAIN NIL))) ; (CHIHUAHUA)
 
+(assert-equal nil (mop-search 'event '((actor elephant))))
+(assert-equal '(event-1) (mop-search 'event '((actor clyde-1))))
+
 (run-tests mop-search)
+
+(get-filler 'canary 'color)
 
 (gethash 'bird (kb-map))
 (gethash 'canary (kb-map))
