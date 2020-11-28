@@ -2,35 +2,34 @@
 (in-package :mop-tests)
 (load-kb *mop-file*)
 
+(assoc 'pedalo (kb-absts))
+
 (run-tests pedalo)
 
 (defun get-options (ll)
   (mapcar #'(lambda (l) (car l)) ll))
 
-(defun get-lst-no-first (ll)
-  (mapcar #'(lambda (l) (cdr l)) ll))
-
 (defun ready-p (option ll)
-  (not (some #'(lambda (l) (member option l)) ll)))
+  (not (some #'(lambda (l) (member option (cdr l))) ll)))
 
 (defun find-first-ready (ll)
-  (do ((i 0 (1+ i))
-       (options (get-options ll) (cdr options))
-       (lst (get-lst-no-first ll)))
-      ((or (null options) 
-           (ready-p (car options) lst))
-       (car options))))
+  (some #'(lambda (option)
+            (when (ready-p option ll) option))
+        (get-options ll)))
 
-(defun remove-ready (ll)
-  (let ((ready (find-first-ready ll)))
-    (values ready (remove nil (mapcar #'(lambda (x)
-                                (remove ready x)) ll)))))
+(defun remove-ready (ll ready)
+  (mapcan #'(lambda (l)
+              (let ((x (remove ready l)))
+                (unless (null x)
+                  (list x))))
+          ll))
 
-(defun merge-parents-list (ll &optional (res nil))
-  (if (null ll)
-      (nreverse res)
-      (multiple-value-bind (ready ll2) (remove-ready ll)
-        (merge-parents-list ll2 (cons ready res)))))
+(defun merge-parents-list (parents-list)
+  (do* ((ll parents-list (remove-ready ll ready))
+        (ready (find-first-ready ll) (find-first-ready ll))
+        (res (list ready) (cons ready res)))
+    ((null ll) (nreverse (cdr res)))
+    ))
 
 (defun build-parents (mop)
   (let ((parents (cadr (get-mop mop))))
@@ -39,3 +38,9 @@
 
 (defun linearize (mop)
   (build-parents (car mop)))
+
+
+(find-first-ready '((A C B E F) (B E F)))
+(merge-parents-list '((A C B E F) (B E F)))
+(mapcan #'(lambda (x) (unless (= x 2) (list x))) '(1 2 3))
+(nconc '((1 2 3)1 2 3 4) '(1 2 3))
