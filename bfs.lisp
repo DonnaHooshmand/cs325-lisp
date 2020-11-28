@@ -19,7 +19,7 @@
           (cdr (assoc node net))))
 
 
-;; No catch throw
+;; no catch throw
 (defun new-paths (path node net)
   (mapcan (lambda (n)
             (unless (member n path) (list (cons n path))))
@@ -46,29 +46,18 @@
                           net
                           (cons node seen)))))))))
 
-(run-tests shortest-path)
-
-;; Catch and throw
+;; catch and throw
 (defun shortest-path (start end net)
   (catch 'abort 
          (bfs end (list (list start)) net)))
 
-(defun new-paths (path node net)
-  (mapcan (lambda (x)
-            (if (consp x) (list x path) (throw 'abort path)))
-          (cdr (assoc node net))))
-
-(defun new-paths (path node net)
+(defun new-paths (path node end net)
   (mapcan (lambda (n)
+            (when (eql n end)
+              (throw 'abort (nreverse (cons n path))))
             (unless (member n path) (list (cons n path))))
           (cdr (assoc node net))))
 
-(defun shortest-path (start end net)
-  (bfs end (list (list start)) net))
-
-(run-tests shortest-path)
-
-; Original BFS
 (defun bfs (end queue net) 
   (if (null queue) 
       nil
@@ -78,8 +67,10 @@
               (reverse path)
               (bfs end
                    (append (cdr queue)
-                           (new-paths path node net))
+                           (new-paths path node end net))
                    net))))))
+
+(run-tests shortest-path)
 
 (shortest-path 'a 'd '((a b c) (b c) (c d))) ; '(a c d) 
 (shortest-path 'a 'c '((a b c) (b c) (c d))) ; '(a c) 
