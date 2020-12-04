@@ -22,7 +22,7 @@
 ;; no catch throw
 (defun new-paths (path node net)
   (mapcan (lambda (n)
-            (unless (member n path) (list (cons n path))))
+            (if (member n path) nil (list (cons n path))))
           (cdr (assoc node net))))
 
 (defun shortest-path (start end net)
