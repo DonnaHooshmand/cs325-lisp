@@ -20,31 +20,25 @@
 
 
 ;; no catch throw
-(defun new-paths (path node net)
+(defun new-paths (path neighbors)
   (mapcan (lambda (n)
             (if (member n path) nil (list (cons n path))))
-          (cdr (assoc node net))))
+          neighbors))
 
 (defun shortest-path (start end net)
   (bfs end (list (list start)) net))
 
-(defun bfs (end queue net &optional (seen nil))
+(defun bfs (end queue net)
   (if (empty-queue-p queue)
       nil
       (let* ((path (car queue))
-             (node (car path)))
-        (cond ((member node seen)
-               (bfs end (cdr queue) net seen))
-              ((member end (assoc node net))
-               (nreverse (cons end path)))
-              (t
-               (let* ((news (new-paths path node net))
-                      (found (find-if (lambda (p) (eql (car p) end)) news)))
-                 (or (nreverse found) 
-                     (bfs end
-                          (append (cdr queue) news)
-                          net
-                          (cons node seen)))))))))
+             (node (car path))
+             (neighbors (assoc node net)))
+        (if (member end neighbors)
+            (nreverse (cons end path))
+            (bfs end
+                 (append (cdr queue) (new-paths path (cdr neighbors)))
+                 net)))))
 
 ;; catch and throw
 (defun shortest-path (start end net)
