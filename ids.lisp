@@ -3,9 +3,7 @@
                  (lambda (state) 
                    (eql state end))
                  (lambda (path)
-                   (mapcan (lambda (node)
-                             (if (member node path) nil (list node)))
-                           (cdr (assoc (car path) net)))))))
+                   (cdr (assoc (car path) net))))))
 
 (defun ids (paths pred gen)
   (do* ((i 0 (1+ i))
@@ -18,17 +16,22 @@
       path 
       'more-to-try))
 
-(defun update-res (old new)
-  (if (eql old 'more-to-try)
-      (or new 'more-to-try)
-      new))
+(defun update-res (old-res new-res)
+  (if (eql old-res 'more-to-try)
+      (or new-res 'more-to-try)
+      new-res))
+
+(defun calc-new-res (path pred gen n state)
+  (if (member (car state) path)
+      nil
+      (dls (cons (car state) path) pred gen (1- n))))
 
 (defun dls (path pred gen n)
   (if (<= n 0) 
       (new-depth-p path pred)
       (do ((state (funcall gen path) (cdr state))
-           (res nil (update-res res (dls (cons (car state) path) pred gen (1- n)))))
-          ((or (null state) (consp res))
+           (res nil (update-res res (calc-new-res path pred gen n state))))
+          ((or (null state) (consp res)) 
            res))))
 
 (test-path '() 'a 'c '((a b) (b a) (c)))
