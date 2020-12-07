@@ -13,6 +13,11 @@
                            (new-paths path node net))
                    net))))))
 
+(defun new-paths (path node net)
+  (mapcar #'(lambda (n)
+              (cons n path))
+          (cdr (assoc node net))))
+
 
 ; paths - A list of paths, where each path is a list of states, from newest to oldest
 ; pred - A predicate that takes a state and returns true if the state is a goal state
@@ -31,15 +36,27 @@
                  pred
                  gen)))))
 
+
+
+(defun new-paths (path neighbors)
+  (mapcan (lambda (s) 
+            (and (null (member s path)) (list (cons s path))))
+          neighbors))
+
+(defun bfs (paths pred gen)
+  (and paths
+       (let ((neighbors (funcall gen (car paths))))
+         (or (some (lambda (s) (and (funcall pred s) (cons s (car paths)))) neighbors)
+             (bfs (append (cdr paths) (new-paths (car paths) neighbors))
+                  pred
+                  gen)))))
+
 (defun shortest-path (start end net)
   (nreverse (bfs (list (list start))
                  (lambda (state) 
                    (eql state end))
                  (lambda (path)
-                   (mapcan (lambda (node)
-                             (unless (member node path)
-                               (list node)))
-                           (cdr (assoc (car path) net)))))))
+                   (cdr (assoc (car path) net))))))
 
 
 (shortest-path 'a 'f '((a b c) (b c) (c e) (e f)))
@@ -51,6 +68,13 @@
 
 (defparameter net-test '((a b c) (b c) (c e) (e f)))
 (defparameter net-test '((a b c) (b a c) (c d)))
+
+(funcall
+  (lambda (state) 
+    (eql state end))
+
+  )
+
 (funcall
   (lambda (path)
     (mapcan (lambda (node)
