@@ -1,4 +1,3 @@
-
 (defun split-string (str &optional (delim #\space))
   (let ((tr (make-tokenizer str delim)))
     (do ((l nil (cons (next-token tr) l)))
@@ -63,6 +62,7 @@
                  :str str
                  :delim delim
                  :len (length str)))
+
 
 (split-string "" #\space)
 
